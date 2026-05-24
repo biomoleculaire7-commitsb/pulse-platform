@@ -1,0 +1,66 @@
+services:
+  # ── PostgreSQL + PostGIS ────────────────────────────────────────────────────
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: pulse_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       pulse_db
+      POSTGRES_USER:     pulse_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pulse_pass}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse_user -d pulse_db"]
+      interval: 10s
+      retries: 5
+    networks: [pulse_net]
+
+  # ── Redis (Celery broker) ───────────────────────────────────────────────────
+  redis:
+    image: redis:6-alpine
+    container_name: pulse_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks: [pulse_net]
+
+  # ── FastAPI Backend ─────────────────────────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: pulse_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL:      postgresql+asyncpg://pulse_user:${DB_PASSWORD:-pulse_pass}@db:5432/pulse_db
+      SECRET_KEY:        ${SECRET_KEY:-pulse-secret-key-2024}
+      MASTER_API_KEY:    ${MASTER_API_KEY:-pulse-master-key-2024}
+      REDIS_URL:         redis://redis:6379/0
+      ALLOWED_ORIGINS:   '["http://localhost","http://localhost:3000"]'
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks: [pulse_net]
+    ports:
+      - "8000:8000"
+
+  # ── React Frontend ──────────────────────────────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: pulse_frontend
+    restart: unless-stopped
+    depends_on: [backend]
+    networks: [pulse_net]
+    ports:
+      - "3000:80"
+
+volumes:
+  pg_data:
+  redis_data:
+
+networks:
+  pulse_net:
+    driver: bridge
