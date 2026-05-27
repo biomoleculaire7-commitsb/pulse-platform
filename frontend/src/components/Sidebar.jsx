@@ -5,12 +5,16 @@ import { fetchTimeseries } from '../api.js'
 
 const fmt = (n) => n?.toLocaleString('ar-EG') ?? '—'
 
-function KpiCard({ label, value, variant = 'accent', delta }) {
+function KpiCard({ label, labelEn, value, variant = 'accent' }) {
   return (
     <div className={`kpi-card ${variant}`}>
-      <div className="kpi-label">{label}</div>
+      <div className="kpi-label">
+        {label}
+        <span style={{ display: 'block', fontSize: 9, color: 'var(--text-muted)', marginTop: 1 }}>
+          {labelEn}
+        </span>
+      </div>
       <div className="kpi-value">{fmt(value)}</div>
-      {delta != null && <div className="kpi-delta">{delta}</div>}
     </div>
   )
 }
@@ -24,7 +28,7 @@ function CustomTooltip({ active, payload, label }) {
     }}>
       <div style={{ color: 'var(--text-secondary)', marginBottom: 2 }}>{label}</div>
       <div style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
-        {payload[0].value} حالة
+        {payload[0].value} حالة / Cases
       </div>
     </div>
   )
@@ -45,40 +49,42 @@ export default function Sidebar({ stats, filters, setFilters, selectedDisease, s
     <aside className="sidebar">
       {/* KPI grid */}
       <div className="kpi-grid">
-        <KpiCard label="حالات اليوم"     value={stats?.today_cases}     variant="danger" />
-        <KpiCard label="حالات نشطة"      value={stats?.active_cases}    variant="warning" />
-        <KpiCard label="متعافون"          value={stats?.recovered_cases} variant="accent" />
-        <KpiCard label="إجمالي الحالات"  value={stats?.total_cases}     variant="info" />
+        <KpiCard label="حالات اليوم"    labelEn="Today's Cases"    value={stats?.today_cases}     variant="danger" />
+        <KpiCard label="حالات نشطة"     labelEn="Active Cases"     value={stats?.active_cases}    variant="warning" />
+        <KpiCard label="متعافون"         labelEn="Recovered"        value={stats?.recovered_cases} variant="accent" />
+        <KpiCard label="إجمالي الحالات" labelEn="Total Cases"      value={stats?.total_cases}     variant="info" />
       </div>
 
       {/* Filters */}
       <div className="filters">
-        <div className="section-head" style={{ padding: '8px 0 6px', border: 'none' }}>الفلاتر</div>
-        <div className="filter-row">
-          <span className="filter-label">المرض</span>
-          <input type="text" placeholder="جميع الأمراض" value={filters.disease} onChange={handleFilter('disease')} />
+        <div className="section-head" style={{ padding: '8px 0 6px', border: 'none' }}>
+          الفلاتر / Filters
         </div>
         <div className="filter-row">
-          <span className="filter-label">من</span>
+          <span className="filter-label">المرض / Disease</span>
+          <input type="text" placeholder="All diseases" value={filters.disease} onChange={handleFilter('disease')} />
+        </div>
+        <div className="filter-row">
+          <span className="filter-label">من / From</span>
           <input type="date" value={filters.date_from} onChange={handleFilter('date_from')} />
         </div>
         <div className="filter-row">
-          <span className="filter-label">إلى</span>
+          <span className="filter-label">إلى / To</span>
           <input type="date" value={filters.date_to} onChange={handleFilter('date_to')} />
         </div>
         <div className="filter-row">
-          <span className="filter-label">الحالة</span>
+          <span className="filter-label">الحالة / Status</span>
           <select value={filters.status} onChange={handleFilter('status')}>
-            <option value="">الكل</option>
-            <option value="active">نشط</option>
-            <option value="recovered">متعافٍ</option>
-            <option value="deceased">وفاة</option>
+            <option value="">All / الكل</option>
+            <option value="active">Active / نشط</option>
+            <option value="recovered">Recovered / متعافٍ</option>
+            <option value="deceased">Deceased / وفاة</option>
           </select>
         </div>
       </div>
 
       {/* Time series chart */}
-      <div className="section-head">المنحنى الزمني (30 يوم)</div>
+      <div className="section-head">المنحنى الزمني / Timeline (30 days)</div>
       <div className="chart-wrap">
         {ts.data ? (
           <ResponsiveContainer width="100%" height={90}>
@@ -99,13 +105,13 @@ export default function Sidebar({ stats, filters, setFilters, selectedDisease, s
           </ResponsiveContainer>
         ) : (
           <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: 12 }}>
-            جاري التحميل...
+            Loading...
           </div>
         )}
       </div>
 
       {/* Disease breakdown */}
-      <div className="section-head">توزيع الأمراض</div>
+      <div className="section-head">توزيع الأمراض / Disease Breakdown</div>
       <div className="disease-list">
         {stats?.by_disease?.length ? (
           <>
@@ -113,7 +119,7 @@ export default function Sidebar({ stats, filters, setFilters, selectedDisease, s
               className={`disease-row ${!selectedDisease ? 'active' : ''}`}
               onClick={() => setSelectedDisease(null)}
             >
-              <span className="disease-name">جميع الأمراض</span>
+              <span className="disease-name">All / جميع الأمراض</span>
               <span className="disease-count">{fmt(stats.total_cases)}</span>
             </div>
             {stats.by_disease.map(d => (
@@ -132,7 +138,7 @@ export default function Sidebar({ stats, filters, setFilters, selectedDisease, s
           </>
         ) : (
           <div style={{ padding: '16px', color: 'var(--text-muted)', fontSize: 12, textAlign: 'center' }}>
-            لا توجد بيانات
+            No data / لا توجد بيانات
           </div>
         )}
       </div>

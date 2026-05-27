@@ -1,5 +1,4 @@
 import { format } from 'date-fns'
-import { ar } from 'date-fns/locale'
 
 export default function Header({ lastUpdated, loading }) {
   return (
@@ -8,6 +7,9 @@ export default function Header({ lastUpdated, loading }) {
         <div className="pulse-dot" />
         <h1>
           <span>PULSE</span> — المراقبة الصحية الحينية
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginRight: 8, fontWeight: 400 }}>
+            Real-time Health Monitoring
+          </span>
         </h1>
         <div className="badge">LIVE</div>
       </div>
@@ -18,11 +20,11 @@ export default function Header({ lastUpdated, loading }) {
         )}
         <span className="last-update">
           {lastUpdated
-            ? `آخر تحديث: ${format(lastUpdated, 'HH:mm:ss')}`
-            : 'جاري التحميل...'}
+            ? `آخر تحديث / Last update: ${format(lastUpdated, 'HH:mm:ss')}`
+            : 'جاري التحميل... Loading'}
         </span>
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          تحديث كل 30 ث
+          تحديث كل 30 ث / Every 30s
         </span>
       </div>
     </header>
