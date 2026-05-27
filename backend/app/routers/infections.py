@@ -1,16 +1,14 @@
 """
 POST /api/infections  - Submit new infection record
-GET  /api/infections  - Query with filters (date, region, disease)
+GET  /api/infections  - Query with filters
 GET  /api/infections/{id} - Single record
 """
 import random
-import math
 from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from geoalchemy2.functions import ST_MakePoint, ST_SetSRID
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,10 +21,8 @@ from app.schemas import InfectionCreate, InfectionResponse, InfectionListRespons
 router = APIRouter()
 
 
-def _fuzz_coordinate(value: float, radius_m: int) -> float:
-    """Add random offset ≤ radius_m meters for privacy"""
-    # 1 degree ≈ 111,320 meters
-    delta = (random.uniform(-radius_m, radius_m)) / 111_320
+def _fuzz_coordinate(value: float, radius_m: int = 500) -> float:
+    delta = random.uniform(-radius_m, radius_m) / 111_320
     return round(value + delta, 6)
 
 
@@ -37,13 +33,8 @@ async def create_infection(
     db: AsyncSession = Depends(get_db),
     principal: dict = Depends(require_write),
 ):
-    """
-    Accept infection report from mobile app or external system.
-    - patient_id is immediately hashed (SHA-256 + salt), original never stored.
-    - Coordinates are fuzzed by up to LOCATION_FUZZING_METERS for privacy.
-    """
-    lat_fuzz = _fuzz_coordinate(payload.lat, settings.LOCATION_FUZZING_METERS)
-    lng_fuzz = _fuzz_coordinate(payload.lng, settings.LOCATION_FUZZING_METERS)
+    lat_fuzz = _fuzz_coordinate(payload.lat)
+    lng_fuzz = _fuzz_coordinate(payload.lng)
 
     record = InfectionRecord(
         patient_hash   = InfectionRecord.hash_patient_id(payload.patient_id),
@@ -52,7 +43,6 @@ async def create_infection(
         latitude       = lat_fuzz,
         longitude      = lng_fuzz,
         region         = payload.region,
-        location       = ST_SetSRID(ST_MakePoint(lng_fuzz, lat_fuzz), 4326),
         infection_date = payload.date,
         source         = payload.source or "api",
         metadata_json  = payload.metadata or {},
@@ -84,7 +74,6 @@ async def list_infections(
     principal: dict = Depends(require_read),
 ):
     filters = [InfectionRecord.is_active == True]
-
     if date_from:
         filters.append(InfectionRecord.infection_date >= date_from)
     if date_to:
@@ -113,7 +102,7 @@ async def list_infections(
     await audit(
         db, "READ", "infections",
         ip=request.client.host if request.client else "unknown",
-        details={"filters": {"date_from": str(date_from), "region": region}, "total": total},
+        details={"total": total},
         key_id=principal.get("id"),
     )
 
