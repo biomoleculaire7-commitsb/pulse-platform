@@ -61,3 +61,15 @@ async def health():
 @app.get("/")
 async def root():
     return {"message": "PULSE API running", "docs": "/api/docs"}
+
+@app.delete("/api/infections/reset")
+async def reset_infections(x_api_key: str = Header(None)):
+    from app.database import AsyncSessionLocal
+    from app.models import InfectionRecord
+    from sqlalchemy import delete
+    if x_api_key != "pulse-master-2024":
+        return {"error": "unauthorized"}
+    async with AsyncSessionLocal() as db:
+        await db.execute(delete(InfectionRecord))
+        await db.commit()
+    return {"message": "All infections deleted"}
