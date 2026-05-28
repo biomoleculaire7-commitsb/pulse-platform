@@ -126,3 +126,16 @@ async def get_infection(
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
     return record
+
+@router.delete("/all", summary="Delete all records (admin only)")
+async def delete_all_infections(
+    db: AsyncSession = Depends(get_db),
+    principal: dict = Depends(require_write),
+):
+    """حذف جميع السجلات — للاستخدام في الاختبار فقط"""
+    from sqlalchemy import update
+    await db.execute(
+        update(InfectionRecord).values(is_active=False)
+    )
+    await db.commit()
+    return {"message": "All records deactivated"}
