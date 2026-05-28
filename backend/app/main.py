@@ -4,7 +4,7 @@ PULSE — Real-time Health Monitoring
 import logging
 import time
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 
 logging.basicConfig(level=logging.INFO)
@@ -62,14 +62,22 @@ async def health():
 async def root():
     return {"message": "PULSE API running", "docs": "/api/docs"}
 
-@app.delete("/api/infections/reset")
-async def reset_infections(x_api_key: str = Header(None)):
-    from app.database import AsyncSessionLocal
-    from app.models import InfectionRecord
-    from sqlalchemy import delete
-    if x_api_key != "pulse-master-2024":
-        return {"error": "unauthorized"}
-    async with AsyncSessionLocal() as db:
-        await db.execute(delete(InfectionRecord))
-        await db.commit()
-    return {"message": "All infections deleted"}
+@app.delete("/api/infections/reset", tags=["Admin"])
+async def reset_all_infections(x_api_key: str = Header(None)):
+    """حذف جميع سجلات الإصابات — للمسؤول فقط"""
+    MASTER_KEY = os.environ.get("MASTER_API_KEY", "pulse-master-2024")
+    if x_api_key != MASTER_KEY:
+        return {"error": "Unauthorized"}
+    try:
+        from app.database import AsyncSessionLocal
+        from app.models import InfectionRecord
+        from sqlalchemy import delete
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(delete(InfectionRecord))
+            await db.commit()
+            count = result.rowcount
+        logger.info(f"Deleted {count} infection records")
+        return {"message": f"Deleted {count} records successfully"}
+    except Exception as e:
+        logger.error(f"Reset error: {e}")
+        return {"error": str(e)}
