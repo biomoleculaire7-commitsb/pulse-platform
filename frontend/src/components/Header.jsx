@@ -24,7 +24,7 @@ export default function Header({ lastUpdated, loading }) {
             : 'جاري التحميل... Loading'}
         </span>
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          تحديث كل 30 ث / Every 30s
+          تحديث كل 2 دقيقة / Every 2 min / Every 30s
         </span>
       </div>
     </header>

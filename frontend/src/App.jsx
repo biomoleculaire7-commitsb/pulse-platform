@@ -6,7 +6,7 @@ import { usePolling } from './hooks/usePolling.js'
 import { fetchStats, fetchInfections, fetchHeatmap } from './api.js'
 import { format } from 'date-fns'
 
-const POLL_INTERVAL = 30_000 // 30 seconds
+const POLL_INTERVAL = 120_000 // 30 seconds
 
 export default function App() {
   const [filters, setFilters] = useState({
