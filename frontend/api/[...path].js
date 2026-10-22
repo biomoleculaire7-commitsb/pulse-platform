@@ -1,15 +1,22 @@
-export default async function handler(req, res) {
-  const path = [].concat(req.query.path || []).join('/')
-  const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''
-  const target = `${process.env.BACKEND_URL}/api/${path}${qs}`
+const ALLOWED = [
+  /^health$/,
+  /^dashboard\/(stats|timeseries|heatmap)$/,
+  /^infections$/,
+]
 
-  const r = await fetch(target, {
-    method: req.method,
-    headers: {
-      'X-API-Key': process.env.PULSE_API_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Read-only' })
+  }
+
+  const path = [].concat(req.query.path || []).join('/')
+  if (!ALLOWED.some(rx => rx.test(path))) {
+    return res.status(403).json({ error: 'Not allowed' })
+  }
+
+  const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''
+  const r = await fetch(`${process.env.BACKEND_URL}/api/${path}${qs}`, {
+    headers: { 'X-API-Key': process.env.PULSE_API_KEY },
   })
 
   res.status(r.status)
