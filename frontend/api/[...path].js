@@ -9,13 +9,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Read-only' })
   }
 
-  const path = [].concat(req.query.path || []).join('/')
+  const url = new URL(req.url, 'http://localhost')
+  const path = url.pathname.replace(/^\/api\//, '').replace(/\/+$/, '')
+
   if (!ALLOWED.some(rx => rx.test(path))) {
-    return res.status(403).json({ error: 'Not allowed' })
+    return res.status(403).json({ error: 'Not allowed', path })
   }
 
-  const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''
-  const r = await fetch(`${process.env.BACKEND_URL}/api/${path}${qs}`, {
+  const r = await fetch(`${process.env.BACKEND_URL}/api/${path}${url.search}`, {
     headers: { 'X-API-Key': process.env.PULSE_API_KEY },
   })
 
