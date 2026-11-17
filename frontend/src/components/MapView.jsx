@@ -10,6 +10,9 @@ const DISEASE_COLORS = {
   'Cholera': '#1e90ff',
   'Ebola': '#8c00ff',
   'Ascaris lumbricoides': '#ff6348',
+  'Trichuris': '#e84393',
+  'Hookworm': '#a55eea',
+  'Ankylostom': '#a55eea',
   'Ascaris': '#ff6348',
   'Parasites': '#ff6348',
   'default': '#00ffaa',
@@ -40,7 +43,7 @@ export default function MapView({ infections, heatmapData, mapMode, setMapMode, 
 
   useEffect(() => {
     if (mapInstance.current) return
-    mapInstance.current = L.map(mapRef.current, { center: [24, 45], zoom: 5 })
+    mapInstance.current = L.map(mapRef.current, { center: [28.5, 2.6], zoom: 5 })
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 19,
     }).addTo(mapInstance.current)
@@ -84,6 +87,8 @@ export default function MapView({ infections, heatmapData, mapMode, setMapMode, 
     { name: 'Cholera', color: '#1e90ff' },
     { name: 'Ebola', color: '#8c00ff' },
     { name: 'Ascaris / Parasites', color: '#ff6348' },
+    { name: 'Trichuris trichiura', color: '#e84393' },
+    { name: 'Hookworm / Ankylostomes', color: '#a55eea' },
     { name: 'Other / أخرى', color: '#00ffaa' },
   ]
 
