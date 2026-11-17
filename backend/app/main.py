@@ -65,8 +65,8 @@ async def root():
 @app.delete("/api/infections/reset", tags=["Admin"])
 async def reset_all_infections(x_api_key: str = Header(None)):
     """حذف جميع سجلات الإصابات — للمسؤول فقط"""
-    MASTER_KEY = os.environ.get("MASTER_API_KEY", "pulse-master-2024")
-    if x_api_key != MASTER_KEY:
+    MASTER_KEY = os.environ.get("MASTER_API_KEY")
+    if not MASTER_KEY or x_api_key != MASTER_KEY:
         return {"error": "Unauthorized"}
     try:
         from app.database import AsyncSessionLocal
