@@ -11,6 +11,6 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: SECRET_KEY
-        value: pulse-secret-2024
+        sync: false          # à définir dans le tableau de bord Render (jamais dans le dépôt)
       - key: MASTER_API_KEY
-        value: pulse-master-2024
+        sync: false          # à définir dans le tableau de bord Render (jamais dans le dépôt)
